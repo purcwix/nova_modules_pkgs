@@ -14,8 +14,8 @@ jobs:
       - name: Validate new package
         run: |
           echo "Checking structure..."
-          if ! ls packages/* > /dev/null 2>&1; then
-            echo "❌ No package detected in packages/"
+          if ! ls */.nvroot > /dev/null 2>&1; then
+            echo "❌ No package detected!"
             exit 1
           fi
           echo "✅ Package structure valid!"
@@ -29,4 +29,4 @@ jobs:
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          merge-method: squash
+          merge-method: squashckageckageckage
