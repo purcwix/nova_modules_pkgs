@@ -1,0 +1,33 @@
+name: Nova Package Publish
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate new package
+        run: |
+          echo "Checking structure..."
+          # Rule: package must be inside packages/
+          if ! ls packages/* > /dev/null 2>&1; then
+            echo "❌ No package detected in packages/"
+            exit 1
+          fi
+          echo "✅ Package structure valid!"
+
+  auto-merge:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Auto-merge PR
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-method: squash
