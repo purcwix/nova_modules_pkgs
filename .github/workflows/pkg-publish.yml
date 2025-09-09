@@ -13,12 +13,12 @@ jobs:
 
       - name: Validate new package
         run: |
-          echo "Checking structure..."
-          if ! ls packages/* > /dev/null 2>&1; then
-            echo "❌ No package detected in packages/"
-            exit 1
-          fi
-          echo "✅ Package structure valid!"
+             echo "Checking structure..."
+             if ! ls */.nvroot > /dev/null 2>&1 && ! [ -f .nvroot ]; then
+             echo "❌ No package detected!"
+             exit 1
+             fi
+             echo "✅ Package structure valid!"
 
   auto-merge:
     needs: validate
