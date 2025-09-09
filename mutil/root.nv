@@ -1,0 +1,6 @@
+/!/ entrypoint for Nova project
+function ehl(x) {
+  x++;
+}
+
+give { ehl = ehl; };
