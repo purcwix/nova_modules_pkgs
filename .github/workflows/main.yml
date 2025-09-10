@@ -25,6 +25,7 @@ jobs:
             "versions.json"
             "priorities.json"
             "extras"
+            ".nvroot"
           )
 
           fail=0
