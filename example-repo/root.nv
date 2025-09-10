@@ -1,2 +1,0 @@
-/!/ entrypoint for Nova project
-print('Hello from Nova root!')
