@@ -1,32 +1,56 @@
-name: Nova Package Publish
+name: Nova Directory Validator
 
 on:
+  push:
   pull_request:
-    types: [opened, synchronize]
 
 jobs:
-  validate:
+  validate-dirs:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Validate new package
+      - name: Validate required files and dirs
         run: |
-          echo "Checking structure..."
-          if ! ls packages/* > /dev/null 2>&1; then
-            echo "❌ No package detected in packages/"
-            exit 1
-          fi
-          echo "✅ Package structure valid!"
+          REQUIRED=(
+            "dependency.json"
+            "commands"
+            "plugins"
+            "root.nv"
+            "versions.json"
+            "priorities.json"
+            "extras"
+          )
 
-  auto-merge:
-    needs: validate
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - name: Auto-merge PR
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          merge-method: squash
+          # Check for missing
+          missing=0
+          for item in "${REQUIRED[@]}"; do
+            if [ ! -e "$item" ]; then
+              echo "❌ Missing: $item"
+              missing=1
+            else
+              echo "✅ Found: $item"
+            fi
+          done
+
+          # Check for unknown files/dirs at repo root
+          unknown=0
+          for entry in * .*; do
+            case "$entry" in
+              .|..|.git|.github) continue ;; # allowed hidden dirs
+              ${REQUIRED[0]}|${REQUIRED[1]}|${REQUIRED[2]}|${REQUIRED[3]}|${REQUIRED[4]}|${REQUIRED[5]}|${REQUIRED[6]})
+                continue ;;
+              *)
+                echo "⚠️ Unknown file/dir: $entry"
+                unknown=1
+                ;;
+            esac
+          done
+
+          if [ $missing -eq 1 ] || [ $unknown -eq 1 ]; then
+            echo "Validation failed: Repo contents don’t match the sacred layout."
+            exit 1
+          else
+            echo "All required files/dirs are present and no intruders found. 🎉"
+          fi
