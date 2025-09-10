@@ -15,8 +15,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Validate required files and dirs
-        id: validate
+      - name: Validate each repo-root directory
         run: |
           REQUIRED=(
             "dependency.json"
@@ -28,39 +27,41 @@ jobs:
             "extras"
           )
 
-          missing=0
-          for item in "${REQUIRED[@]}"; do
-            if [ ! -e "$item" ]; then
-              echo "❌ Missing: $item"
-              missing=1
-            else
-              echo "✅ Found: $item"
-            fi
+          fail=0
+
+          for dir in */; do
+            echo "🔎 Checking $dir ..."
+            pushd "$dir" > /dev/null
+
+            # Check required items
+            for item in "${REQUIRED[@]}"; do
+              if [ ! -e "$item" ]; then
+                echo "❌ $dir is missing: $item"
+                fail=1
+              else
+                echo "✅ $dir has: $item"
+              fi
+            done
+
+            # Check for unknown files/dirs
+            for entry in * .*; do
+              case "$entry" in
+                .|..|.git|.github) continue ;;
+                ${REQUIRED[0]}|${REQUIRED[1]}|${REQUIRED[2]}|${REQUIRED[3]}|${REQUIRED[4]}|${REQUIRED[5]}|${REQUIRED[6]})
+                  continue ;;
+                *)
+                  echo "⚠️ $dir contains unknown file/dir: $entry"
+                  fail=1
+                  ;;
+              esac
+            done
+
+            popd > /dev/null
           done
 
-          unknown=0
-          for entry in * .*; do
-            case "$entry" in
-              .|..|.git|.github) continue ;;
-              ${REQUIRED[0]}|${REQUIRED[1]}|${REQUIRED[2]}|${REQUIRED[3]}|${REQUIRED[4]}|${REQUIRED[5]}|${REQUIRED[6]})
-                continue ;;
-              *)
-                echo "⚠️ Unknown file/dir: $entry"
-                unknown=1
-                ;;
-            esac
-          done
-
-          if [ $missing -eq 1 ] || [ $unknown -eq 1 ]; then
-            echo "Validation failed."
+          if [ $fail -eq 1 ]; then
+            echo "❌ Validation failed: one or more directories are invalid."
             exit 1
           else
-            echo "All good."
+            echo "🎉 All root-level directories passed validation!"
           fi
-
-      - name: Enable auto-merge
-        if: github.event_name == 'pull_request' && success()
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          pull-request-number: ${{ github.event.pull_request.number }}
-          merge-method: squash
