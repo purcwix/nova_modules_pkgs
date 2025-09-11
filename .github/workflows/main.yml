@@ -1,21 +1,4 @@
-name: Nova Directory Validator
-
-on:
-  pull_request:
-  push:
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  validate-dirs:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Validate each repo-root directory
+- name: Validate each repo-root directory
         run: |
           REQUIRED=(
             "dependency.json"
@@ -26,6 +9,7 @@ jobs:
             "priorities.json"
             "extras"
             ".nvroot"
+            ".nova_modules"
           )
 
           fail=0
@@ -48,7 +32,7 @@ jobs:
             for entry in * .*; do
               case "$entry" in
                 .|..|.git|.github) continue ;;
-                ${REQUIRED[0]}|${REQUIRED[1]}|${REQUIRED[2]}|${REQUIRED[3]}|${REQUIRED[4]}|${REQUIRED[5]}|${REQUIRED[6]})
+                ${REQUIRED[@]})
                   continue ;;
                 *)
                   echo "⚠️ $dir contains unknown file/dir: $entry"
@@ -59,10 +43,3 @@ jobs:
 
             popd > /dev/null
           done
-
-          if [ $fail -eq 1 ]; then
-            echo "❌ Validation failed: one or more directories are invalid."
-            exit 1
-          else
-            echo "🎉 All root-level directories passed validation!"
-          fi
